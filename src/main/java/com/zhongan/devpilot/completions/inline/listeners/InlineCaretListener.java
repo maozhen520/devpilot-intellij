@@ -24,15 +24,13 @@ public class InlineCaretListener implements CaretListener, Disposable {
             return;
         }
 
-        if (completionPreview.isByLineAcceptCaretChange(event)) {
-            return;
-        }
         Disposer.dispose(completionPreview);
         InlineCompletionCache.clear(event.getEditor());
     }
 
     private boolean isSingleOffsetChange(CaretEvent event) {
-        return event.getOldPosition().line == event.getNewPosition().line;
+        return event.getOldPosition().line == event.getNewPosition().line
+                && event.getOldPosition().column + 1 == event.getNewPosition().column;
     }
 
     @Override

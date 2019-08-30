@@ -29,7 +29,6 @@ public class DevPilotErrorReporter extends ITNReporter {
 
     private final PluginId devpilotPluginId = PluginId.getId("com.zhongan.devPilot");
 
-    private static final String READ_ACCESS_ERROR = "Read access is allowed from inside read-action";
 
     /**
      * Ignore deprecated method error, in internal model, still receiver warning
@@ -39,7 +38,6 @@ public class DevPilotErrorReporter extends ITNReporter {
     @Override
     public boolean showErrorInRelease(IdeaLoggingEvent event) {
         boolean isDevpilotDeprecatedUseNotice = false;
-        boolean isReadAccessError = false;
         Throwable t = event.getThrowable();
         PluginId pluginId = PluginUtil.getInstance().findPluginId(t);
         if (Objects.equals(pluginId, devpilotPluginId)) {
@@ -52,11 +50,8 @@ public class DevPilotErrorReporter extends ITNReporter {
                     }
                 }
             }
-            if (StringUtils.containsIgnoreCase(t.getMessage(), READ_ACCESS_ERROR)) {
-                isReadAccessError = true;
-            }
         }
-        return !isDevpilotDeprecatedUseNotice && !isReadAccessError;
+        return !isDevpilotDeprecatedUseNotice;
     }
 
     @NotNull

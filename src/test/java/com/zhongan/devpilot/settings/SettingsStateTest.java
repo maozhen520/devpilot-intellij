@@ -1,7 +1,6 @@
 package com.zhongan.devpilot.settings;
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.zhongan.devpilot.enums.EditorActionEnum;
 import com.zhongan.devpilot.enums.ModelServiceEnum;
 import com.zhongan.devpilot.settings.actionconfiguration.EditorActionConfigurationState;
 import com.zhongan.devpilot.settings.state.CodeLlamaSettingsState;
@@ -37,6 +36,13 @@ public class SettingsStateTest extends BasePlatformTestCase {
 
         settings.setSelectedModel(ModelServiceEnum.OPENAI.getName());
         assertEquals(ModelServiceEnum.OPENAI.getName(), settings.getSelectedModel());
+    }
+
+    public void testEditorActionConfigurationState() {
+        var settings = EditorActionConfigurationState.getInstance();
+
+        assertEquals("{{selectedCode}}\nGiving the code above, please help to generate JUnit test cases for it, be aware that if the code is untestable, please state it and give suggestions instead.Put the code in code block.\n", settings.getDefaultActions().get("devpilot.action.generate.tests"));
+        assertEquals(6, settings.getDefaultActions().size());
     }
 
 }

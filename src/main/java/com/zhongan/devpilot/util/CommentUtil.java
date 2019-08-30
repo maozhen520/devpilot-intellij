@@ -1,36 +1,40 @@
 
 package com.zhongan.devpilot.util;
 
-import com.intellij.lang.Commenter;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageCommenters;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CommentUtil {
-    public static boolean isMultiLineComment(String text, Language language) {
-        final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
 
-        if (commenter == null) {
-            return false;
+    private static final String MULTI_LINE_REGEX = "/\\*(.|\\n)*?\\*/";
+
+    private static final String SINGLE_LINE_REGEX = "//.*";
+
+    private static final Pattern MULTI_LINE_PATTERN = Pattern.compile(MULTI_LINE_REGEX);
+
+    private static final Pattern SINGLE_LINE_PATTERN = Pattern.compile(SINGLE_LINE_REGEX);
+
+    public static boolean isMultiLineComment(String text) {
+        Matcher multiLineCommentMatcher = MULTI_LINE_PATTERN.matcher(text);
+
+        while (multiLineCommentMatcher.find()) {
+            return true;
         }
-
-        var blockSuffix = commenter.getBlockCommentSuffix();
-        return blockSuffix != null && text.endsWith(blockSuffix);
+        return false;
     }
 
-    public static boolean isSingleLineComment(String text, Language language) {
-        final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
+    public static boolean isSingleLineComment(String text) {
+        Matcher singleLineCommentMatcher = SINGLE_LINE_PATTERN.matcher(text);
 
-        if (commenter == null) {
-            return false;
+        while (singleLineCommentMatcher.find()) {
+            return true;
         }
-
-        var linePrefix = commenter.getLineCommentPrefix();
-        return linePrefix != null && text.startsWith(linePrefix);
+        return false;
     }
 
-    public static boolean containsComment(String text, Language language) {
-        if (text == null || language == null) return false;
-        return isMultiLineComment(text, language) || isSingleLineComment(text, language);
+    public static boolean containsComment(String text) {
+        if (text == null) return false;
+        return isMultiLineComment(text) || isSingleLineComment(text);
     }
 
 }

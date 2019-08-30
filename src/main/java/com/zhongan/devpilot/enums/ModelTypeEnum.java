@@ -31,14 +31,14 @@ public enum ModelTypeEnum {
 
     public static ModelTypeEnum fromName(String name) {
         if (name == null) {
-            return GPT3_5;
+            return null;
         }
         for (ModelTypeEnum type : ModelTypeEnum.values()) {
             if (type.getName().equals(name)) {
                 return type;
             }
         }
-        return GPT3_5;
+        return null;
     }
 
     @Override

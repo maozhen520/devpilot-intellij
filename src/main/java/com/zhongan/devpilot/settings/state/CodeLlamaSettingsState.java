@@ -13,8 +13,6 @@ import org.jetbrains.annotations.Nullable;
 public class CodeLlamaSettingsState implements PersistentStateComponent<CodeLlamaSettingsState> {
     private String modelHost;
 
-    private String modelName = "CodeLlama-7b";
-
     public static CodeLlamaSettingsState getInstance() {
         return ApplicationManager.getApplication().getService(CodeLlamaSettingsState.class);
     }
@@ -25,14 +23,6 @@ public class CodeLlamaSettingsState implements PersistentStateComponent<CodeLlam
 
     public void setModelHost(String modelHost) {
         this.modelHost = modelHost;
-    }
-
-    public String getModelName() {
-        return modelName;
-    }
-
-    public void setModelName(String modelName) {
-        this.modelName = modelName;
     }
 
     @Override

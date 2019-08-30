@@ -18,11 +18,10 @@ import org.jetbrains.annotations.Nullable;
 
 public class DevPilotStatusBarBaseWidget extends EditorBasedStatusBarPopup {
 
-    private static DevPilotStatusEnum currentStatus;
+    private static DevPilotStatusEnum currentStatus = LoginUtils.isLogin() ? DevPilotStatusEnum.LoggedIn : DevPilotStatusEnum.NotLoggedIn;
 
     public DevPilotStatusBarBaseWidget(@NotNull Project project) {
         super(project, false);
-        DevPilotStatusBarBaseWidget.currentStatus = LoginUtils.isLogin() ? DevPilotStatusEnum.LoggedIn : DevPilotStatusEnum.NotLoggedIn;
     }
 
     @Override
