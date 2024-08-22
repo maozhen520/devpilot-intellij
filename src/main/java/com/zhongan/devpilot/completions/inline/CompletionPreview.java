@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
@@ -22,6 +23,7 @@ import com.zhongan.devpilot.util.TelemetryUtils;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,12 +169,15 @@ public class CompletionPreview implements Disposable {
         var fileExtension = name.substring(name.lastIndexOf(".") + 1);
         if (!suffix.contains("\n")) {
             suffix = TreeSitterParser.getInstance(fileExtension)
-                    .parse(editor.getDocument().getText(), cursorOffset, suffix);
+                    .parse(getLinePrefix(cursorOffset), calculateLineCursorPosition(cursorOffset), suffix);
         }
 
         editor.getDocument().insertString(cursorOffset, suffix);
-        editor.getCaretModel().moveToOffset(startOffset + suffix.length());
-
+        if (StringUtils.endsWith(suffix, "{}")) {
+            editor.getCaretModel().moveToOffset(startOffset + suffix.length() - 1);
+        } else {
+            editor.getCaretModel().moveToOffset(startOffset + suffix.length());
+        }
         PsiDocumentManager.getInstance(project).commitAllDocuments();
 
         PsiFile fileAfterCompletion = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -182,6 +187,33 @@ public class CompletionPreview implements Disposable {
         });
 
         TelemetryUtils.completionAccept(completion.id, file);
+    }
+
+    private String getLinePrefix(int offset) {
+        int lineNumber = editor.getDocument().getLineNumber(offset);
+        int lineStartOffset = editor.getDocument().getLineStartOffset(lineNumber);
+        int lineEndOffset = editor.getDocument().getLineEndOffset(lineNumber);
+        return trimLWhitespace(editor.getDocument().getText(TextRange.create(lineStartOffset, lineEndOffset)));
+    }
+
+    private int calculateLineCursorPosition(int offset) {
+        int lineNumber = editor.getDocument().getLineNumber(offset);
+        int lineStartOffset = editor.getDocument().getLineStartOffset(lineNumber);
+        int lineEndOffset = editor.getDocument().getLineEndOffset(lineNumber);
+        String lineText = editor.getDocument().getText(TextRange.create(lineStartOffset, lineEndOffset));
+        int i = 0;
+        while (i < lineText.length() && Character.isWhitespace(lineText.charAt(i))) {
+            i++;
+        }
+        return offset - (lineStartOffset + i);
+    }
+
+    private String trimLWhitespace(String line) {
+        int i = 0;
+        while (i < line.length() && Character.isWhitespace(line.charAt(i))) {
+            i++;
+        }
+        return line.substring(i);
     }
 
     private static AutoImportHandler getAutoImportHandler(Editor editor, PsiFile file, int startOffset, int endOffset) {

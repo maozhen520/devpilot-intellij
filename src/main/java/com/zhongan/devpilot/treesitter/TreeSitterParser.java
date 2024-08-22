@@ -5,7 +5,10 @@ import com.zhongan.devpilot.util.LanguageUtil;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.treesitter.TSLanguage;
 import org.treesitter.TSParser;
 import org.treesitter.TSTree;
@@ -14,6 +17,7 @@ import org.treesitter.TreeSitterJava;
 import org.treesitter.TreeSitterPython;
 
 public class TreeSitterParser {
+
     private final TSLanguage language;
 
     private final static Map<String, TreeSitterParser> parserMap = new ConcurrentHashMap<>();
@@ -37,7 +41,7 @@ public class TreeSitterParser {
         var result = new StringBuilder(output);
         while (result.length() != 0 && result.charAt(0) == ' ') {
             result.deleteCharAt(0);
-            if (containsError(buildFullCode(originCode, position, result.toString()))) {
+            if (containsError(buildLineCode(originCode, position, result.toString()))) {
                 return " " + result;
             }
         }
@@ -64,11 +68,23 @@ public class TreeSitterParser {
         if (language == null) {
             return output;
         }
-
         var result = new StringBuilder(output);
         while (result.length() != 0) {
-            if (containsError(buildFullCode(originCode, position, result.toString()))) {
+            String lineCode = buildLineCode(originCode, position, result.toString());
+            var treeString = getTree(lineCode).getRootNode().toString();
+            if (StringUtils.contains(treeString, "ERROR")) {
                 result.deleteCharAt(result.length() - 1);
+            } else if (StringUtils.contains(treeString, "MISSING")) {
+                String missing = findMissing(treeString);
+                if (StringUtils.isNotBlank(missing)) {
+                    result.append(missing);
+                    if (containsError(buildLineCode(originCode, position, result.toString()))) {
+                        result.deleteCharAt(result.length() - 1);
+                    }
+                    return result.toString();
+                } else {
+                    break;
+                }
             } else {
                 return result.toString();
             }
@@ -77,23 +93,29 @@ public class TreeSitterParser {
         return output;
     }
 
-    private String buildFullCode(String originCode, int position, String output) {
-        StringBuilder stringBuilder = new StringBuilder(originCode);
-        stringBuilder.insert(position, output);
-        return stringBuilder.toString();
+    private String buildLineCode(String originCode, int position, String output) {
+        return new StringBuilder(originCode).insert(position, output).toString();
     }
 
     private boolean containsError(String input) {
         var treeString = getTree(input).getRootNode().toString();
-        return treeString.contains("ERROR")
-                || treeString.contains("MISSING \"}\"")
-                || treeString.contains("MISSING \")\"");
+        return treeString.contains("ERROR") || treeString.contains("MISSING");
     }
 
     private TSTree getTree(String input) {
         var parser = new TSParser();
         parser.setLanguage(language);
         return parser.parseString(null, input);
+    }
+
+    private String findMissing(String input) {
+        Pattern pattern = Pattern.compile("MISSING\\s+\"([^\"]*?)\"");
+        Matcher matcher = pattern.matcher(input);
+        if (matcher.find()) {
+            return matcher.group(1);
+        } else {
+            return null;
+        }
     }
 
     public static TreeSitterParser getInstance(String extension) {
@@ -115,4 +137,5 @@ public class TreeSitterParser {
     private static TreeSitterParser getDefaultParser() {
         return parserMap.get("default");
     }
+
 }
